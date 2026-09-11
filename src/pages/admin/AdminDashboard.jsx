@@ -30,6 +30,8 @@ export default function AdminDashboard() {
     { label:'Trade Reports (Excel)',  icon:'📊', to:'/admin/roi-reports',           color:'cyan',   desc:'Day-wise members · monthly daily trade income' },
     { label:'Manage Live Trades',      icon:'◎',  to:'/admin/day-trades',             color:'purple', desc:'Open from 9 AM · settle anytime' },
     { label:'Salary & Rewards',       icon:'★',  to:'/admin/salary-reward',          color:'green',  desc:'Assign income' },
+    { label:'Reward Plan',            icon:'🏆', to:'/admin/reward-plan',            color:'gold',   desc:'Daily Growth + Life Time settings' },
+    { label:'Website Banners',        icon:'🖼', to:'/admin/website-banners',        color:'cyan',   desc:'Hero slider on marketing site' },
     { label:'All Transactions',       icon:'≡',  to:'/admin/transactions',           color:'orange', desc:'Full ledger' },
   ]
 

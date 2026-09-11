@@ -10,6 +10,8 @@ import AdminMembers from './pages/admin/AdminMembers.jsx'
 import AdminPayments from './pages/admin/AdminPayments.jsx'
 import AdminRoiReports from './pages/admin/AdminRoiReports.jsx'
 import { AdminRoiTrade, AdminDayTrades, AdminSalaryReward, AdminTransactions, AdminSettings } from './pages/admin/AdminPages.jsx'
+import AdminRewardPlan from './pages/admin/AdminRewardPlan.jsx'
+import AdminWebsiteBanners from './pages/admin/AdminWebsiteBanners.jsx'
 
 // Member pages
 import { MemberRegister } from './pages/member/MemberAuth.jsx'
@@ -18,6 +20,7 @@ import { MemberLiveTradingHistory } from './pages/member/MemberLiveTradingHistor
 import { MemberRoiParticipation } from './pages/member/MemberRoiParticipation.jsx'
 import { MemberIncome } from './pages/member/MemberIncome.jsx'
 import { MemberMonthlyIncome } from './pages/member/MemberMonthlyIncome.jsx'
+import { MemberRewards } from './pages/member/MemberRewards.jsx'
 import { MemberAddMember } from './pages/member/MemberAddMember.jsx'
 import MemberWalletTopup from './pages/member/MemberWalletTopup.jsx'
 import MemberPlanTopup from './pages/member/MemberPlanTopup.jsx'
@@ -63,8 +66,10 @@ function AppRoutes() {
           <Route path="/admin/roi-reports"   element={<PrivateRoute role="admin"><AdminRoiReports /></PrivateRoute>} />
           <Route path="/admin/day-trades"    element={<PrivateRoute role="admin"><AdminDayTrades /></PrivateRoute>} />
           <Route path="/admin/salary-reward" element={<PrivateRoute role="admin"><AdminSalaryReward /></PrivateRoute>} />
+          <Route path="/admin/reward-plan" element={<PrivateRoute role="admin"><AdminRewardPlan /></PrivateRoute>} />
           <Route path="/admin/transactions"  element={<PrivateRoute role="admin"><AdminTransactions /></PrivateRoute>} />
           <Route path="/admin/settings"      element={<PrivateRoute role="admin"><AdminSettings /></PrivateRoute>} />
+          <Route path="/admin/website-banners" element={<PrivateRoute role="admin"><AdminWebsiteBanners /></PrivateRoute>} />
           <Route path="/admin/login-popup/video" element={<PrivateRoute role="admin"><AdminLoginPopupVideo /></PrivateRoute>} />
           <Route path="/admin/login-popup/image" element={<PrivateRoute role="admin"><AdminLoginPopupImage /></PrivateRoute>} />
           <Route path="/admin/notices"      element={<PrivateRoute role="admin"><AdminNotices /></PrivateRoute>} />
@@ -74,6 +79,7 @@ function AppRoutes() {
           <Route path="/member/dashboard" element={<PrivateRoute role="member"><MemberDashboard /></PrivateRoute>} />
           <Route path="/member/income" element={<PrivateRoute role="member"><MemberIncome /></PrivateRoute>} />
           <Route path="/member/monthly-income" element={<PrivateRoute role="member"><MemberMonthlyIncome /></PrivateRoute>} />
+          <Route path="/member/rewards" element={<PrivateRoute role="member"><MemberRewards /></PrivateRoute>} />
           <Route path="/member/add-member" element={<PrivateRoute role="member"><MemberAddMember /></PrivateRoute>} />
           <Route path="/member/transactions" element={<PrivateRoute role="member"><MemberTransactionHistory /></PrivateRoute>} />
           <Route path="/member/roi"       element={<PrivateRoute role="member"><MemberRoiTrade /></PrivateRoute>} />

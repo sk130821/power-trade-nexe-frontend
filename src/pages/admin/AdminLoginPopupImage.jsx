@@ -43,7 +43,7 @@ export default function AdminLoginPopupImage() {
       <div className="page-header">
         <div className="page-title">Login image popup</div>
         <div className="page-subtitle">
-          Opens after the member closes the welcome video. If there is no video, this image shows right after login.
+          Shown on the marketing website and after member login (after the welcome video, if set).
         </div>
       </div>
       {toast && <Alert type={toast.type} onClose={() => setToast(null)}>{toast.msg}</Alert>}

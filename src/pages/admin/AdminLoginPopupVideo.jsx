@@ -43,7 +43,7 @@ export default function AdminLoginPopupVideo() {
       <div className="page-header">
         <div className="page-title">Login video popup</div>
         <div className="page-subtitle">
-          Plays in a popup when a member logs in. Uploading a new file deletes the previous video from the server.
+          Plays on the marketing website and when a member logs in. Uploading a new file deletes the previous video from the server.
         </div>
       </div>
       {toast && <Alert type={toast.type} onClose={() => setToast(null)}>{toast.msg}</Alert>}

@@ -115,6 +115,8 @@ export const memberAPI = {
   sendWithdrawalOtp: (data) => http.post('/member/withdrawals/send-otp', data),
   createWithdrawal: (data) => http.post('/member/withdrawals', data),
   getLoginPopups: () => http.get('/member/login-popups'),
+  getRewards: () => http.get('/member/rewards'),
+  claimReward: (data) => http.post('/member/rewards/claim', data),
 }
 
 // ═══════════════════════════════════════════
@@ -132,6 +134,26 @@ export const withdrawalAPI = {
   adminList: (params) => http.get('/admin/withdrawals', { params }),
   adminReject: (id, data) => http.post(`/admin/withdrawals/${id}/reject`, data ?? {}),
   adminMarkPaid: (id, data) => http.post(`/admin/withdrawals/${id}/mark-paid`, data ?? {}),
+}
+
+export const websiteContentAPI = {
+  adminList: () => http.get('/admin/website-banners'),
+  adminListBanners: () => http.get('/admin/website-banners'),
+  adminCreate: (formData) => http.post('/admin/website-banners', formData),
+  adminUpdate: (id, formData) => http.put(`/admin/website-banners/${id}`, formData),
+  adminDelete: (id) => http.delete(`/admin/website-banners/${id}`),
+  getPublicBanners: () => http.get('/public/website-banners'),
+  getPublicLoginPopups: () => http.get('/public/login-popups'),
+}
+
+export const rewardPlanAPI = {
+  getTiers: (params) => http.get('/admin/reward-plan/tiers', { params }),
+  updateTier: (id, formData) =>
+    http.put(`/admin/reward-plan/tiers/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getRequests: (params) => http.get('/admin/reward-plan/requests', { params }),
+  approveRequest: (id, data) => http.post(`/admin/reward-plan/requests/${id}/approve`, data ?? {}),
+  rejectRequest: (id, data) => http.post(`/admin/reward-plan/requests/${id}/reject`, data ?? {}),
+  getAchievers: (params) => http.get('/admin/reward-plan/achievers', { params }),
 }
 
 // ═══════════════════════════════════════════

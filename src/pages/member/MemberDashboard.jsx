@@ -460,6 +460,7 @@ export function MemberDashboard() {
     { to: '/member/income', icon: '💰', label: 'Income', sub: 'Full breakdown', color: 'var(--gold)' },
     { to: '/member/withdraw', icon: '↩', label: 'Withdraw', sub: 'Wallets', color: 'var(--green)' },
     { to: '/member/network', icon: '🔗', label: 'Network', sub: `${directCount} directs`, color: 'var(--purple)' },
+    { to: '/member/rewards', icon: '🏆', label: 'Rewards', sub: member.lifetime_rank || 'Daily + Life Time', color: 'var(--gold)' },
     { to: '/member/roi-history', icon: '📊', label: 'Trade History', sub: 'Participation', color: 'var(--cyan)' },
   ]
 
@@ -475,6 +476,7 @@ export function MemberDashboard() {
               Welcome back, <strong>{member.name}</strong>
               {' · '}
               <span className="mono">{member.referral_code}</span>
+              {member.lifetime_rank ? <> · <span style={{ color: 'var(--gold)' }}>{member.lifetime_rank}</span></> : null}
             </p>
           </div>
           <div className="trading-dash-status">
@@ -566,6 +568,20 @@ export function MemberDashboard() {
       <LiveTradeWinCard wins={live_trade_wins} />
 
       <DailyGrowthIncomeCard member={member} daily_growth_income={daily_growth_income} />
+
+      <div className="trading-growth-strip mb-8">
+        <div className="trading-growth-strip-head">
+          <div>
+            <div className="trading-growth-strip-badge">REWARD PLAN</div>
+            <div className="trading-growth-strip-title">🏆 Daily Growth &amp; Life Time Rewards</div>
+            <div className="trading-growth-strip-sub">
+              Hit directs <strong>and</strong> team business to unlock gifts
+              {member.lifetime_rank ? <> · Current rank <strong>{member.lifetime_rank}</strong></> : null}.
+            </div>
+          </div>
+          <Link to="/member/rewards" className="trading-growth-strip-link">View rewards →</Link>
+        </div>
+      </div>
 
       {member?.referral_code ? (
         <div className="trading-referral-strip mb-8">

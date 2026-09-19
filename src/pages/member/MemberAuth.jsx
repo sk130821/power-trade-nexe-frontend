@@ -132,8 +132,7 @@ export function MemberLogin() {
 const STEPS = [
   { key:'details',  label:'Personal Details', icon:'1' },
   { key:'package',  label:'Select Package',   icon:'2' },
-  { key:'verify',   label:'Verify Email',     icon:'3' },
-  { key:'payment',  label:'Payment',          icon:'4' },
+  { key:'payment',  label:'Payment',          icon:'3' },
   { key:'done',     label:'Complete',         icon:'✓' },
 ]
 
@@ -199,8 +198,6 @@ export function MemberRegister() {
   const [aadhaarFile, setAadhaarFile] = useState(null)
   const [payment, setPayment] = useState({ txn_id:'', remark:'' })
   const [receiptFile, setReceiptFile] = useState(null)
-  const [regOtp, setRegOtp] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
 
   useEffect(() => {
     authAPI.getSettings().then(r => setAdminSettings(r.data || {}))
@@ -254,38 +251,15 @@ export function MemberRegister() {
     return fd
   }
 
-  const sendRegistrationOtp = async () => {
+  const continueToPayment = async () => {
     if (!pkg) { setError('Please select a package'); return }
     setLoading(true); setError('')
     try {
       const { data } = await memberAPI.sendRegistrationOtp(buildRegistrationFormData())
-      setOtpSent(true)
-      setRegOtp('')
-      setStep(2)
-      setError('')
-      if (data?.message) {
-        /* toast via brief success in UI */
-      }
-    } catch(err) { setError(err.response?.data?.error || 'Could not send OTP') }
-    setLoading(false)
-  }
-
-  const verifyRegistrationOtp = async (e) => {
-    e?.preventDefault?.()
-    if (!regOtp || regOtp.length < 6) {
-      setError('Enter the 6-digit OTP from your email')
-      return
-    }
-    setLoading(true); setError('')
-    try {
-      const { data } = await memberAPI.verifyRegistrationOtp({
-        email: details.email.trim(),
-        otp: regOtp.trim(),
-      })
       setMemberId(data.member_id)
       setRefCode(data.member_code || data.referral_code)
-      setStep(3)
-    } catch(err) { setError(err.response?.data?.error || 'OTP verification failed') }
+      setStep(2)
+    } catch(err) { setError(err.response?.data?.error || 'Could not start registration') }
     setLoading(false)
   }
 
@@ -305,7 +279,7 @@ export function MemberRegister() {
       fd.append('amount', pkg)
       if (receiptFile) fd.append('receipt', receiptFile)
       await memberAPI.submitPayment(fd)
-      setStep(4)
+      setStep(3)
     } catch(err) { setError(err.response?.data?.error || 'Payment submission failed') }
     setLoading(false)
   }
@@ -454,9 +428,9 @@ export function MemberRegister() {
               {!pkg && <Alert type="warning">Please select a package to continue</Alert>}
               <div className="auth-register-actions">
                 <Btn variant="ghost" size="lg" onClick={() => setStep(0)}>← Back</Btn>
-                <button type="button" className="auth-submit-btn auth-submit-btn--flex" disabled={!pkg || loading} onClick={sendRegistrationOtp}>
+                <button type="button" className="auth-submit-btn auth-submit-btn--flex" disabled={!pkg || loading} onClick={continueToPayment}>
                   <span className="auth-submit-btn__shine" aria-hidden />
-                  <span className="auth-submit-btn__text">{loading ? 'Sending OTP…' : 'Send email OTP & continue'}</span>
+                  <span className="auth-submit-btn__text">{loading ? 'Please wait…' : 'Continue to payment'}</span>
                   {!loading && <span className="auth-submit-btn__arrow" aria-hidden>→</span>}
                 </button>
               </div>
@@ -466,42 +440,6 @@ export function MemberRegister() {
       )}
 
       {step === 2 && (
-        <div className="auth-register-body">
-          <h3 className="auth-register-section-title">Verify your email</h3>
-          <Alert type="info" className="mb-4">
-            We sent a <strong>6-digit OTP</strong> to <strong>{details.email}</strong>. After verification you must submit package payment — registration is not complete until payment is submitted.
-            {otpSent ? ' Check spam folder if you do not see it.' : ''}
-          </Alert>
-          <form onSubmit={verifyRegistrationOtp}>
-            <FormGroup label="Email OTP" required hint="Valid for 15 minutes">
-              <Input
-                className="auth-register-input"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                value={regOtp}
-                onChange={(e) => setRegOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="123456"
-                required
-                autoFocus
-              />
-            </FormGroup>
-            <div className="auth-register-actions">
-              <Btn variant="ghost" size="lg" type="button" onClick={() => setStep(1)}>← Back</Btn>
-              <Btn variant="ghost" size="lg" type="button" loading={loading} onClick={sendRegistrationOtp}>
-                Resend OTP
-              </Btn>
-              <button type="submit" className="auth-submit-btn auth-submit-btn--flex" disabled={loading || regOtp.length < 6}>
-                <span className="auth-submit-btn__shine" aria-hidden />
-                <span className="auth-submit-btn__text">{loading ? 'Verifying…' : 'Verify & continue to payment'}</span>
-                {!loading && <span className="auth-submit-btn__arrow" aria-hidden>→</span>}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {step === 3 && (
         <div className="auth-register-body">
           <h3 className="auth-register-section-title">Payment details</h3>
           <Alert type="warning" className="mb-4">
@@ -543,7 +481,7 @@ export function MemberRegister() {
         </div>
       )}
 
-      {step === 4 && (
+      {step === 3 && (
         <div className="auth-register-done">
           <div className="auth-register-done__icon" aria-hidden>🎉</div>
           <h3 className="auth-register-done__title">Registration submitted!</h3>

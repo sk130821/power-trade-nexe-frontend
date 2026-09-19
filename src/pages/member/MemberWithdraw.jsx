@@ -16,9 +16,6 @@ export default function MemberWithdraw() {
   const [wallet, setWallet] = useState(user?.wallet_address || '')
   const [savingWallet, setSavingWallet] = useState(false)
   const [form, setForm] = useState({ wallet_type: 'exchange_wallet', amount: '', note: '' })
-  const [withdrawOtp, setWithdrawOtp] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
-  const [sendingOtp, setSendingOtp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -61,35 +58,6 @@ export default function MemberWithdraw() {
     }
   }
 
-  const sendWithdrawOtp = async () => {
-    setError('')
-    setSuccess('')
-    const amt = Number(form.amount)
-    if (!Number.isFinite(amt) || amt <= 0) {
-      setError('Enter a valid amount first')
-      return
-    }
-    if (amt < minWithdraw) {
-      setError(`Minimum withdrawal is ${fmt.usd2(minWithdraw)}`)
-      return
-    }
-    setSendingOtp(true)
-    try {
-      const { data } = await memberAPI.sendWithdrawalOtp({
-        wallet_type: form.wallet_type,
-        amount: amt,
-        note: form.note || null,
-      })
-      setOtpSent(true)
-      setWithdrawOtp('')
-      setSuccess(data?.message || 'OTP sent to your registered email')
-    } catch (err) {
-      setError(err.response?.data?.error || err.message)
-    } finally {
-      setSendingOtp(false)
-    }
-  }
-
   const submitWithdraw = async (e) => {
     e.preventDefault()
     setError('')
@@ -103,22 +71,15 @@ export default function MemberWithdraw() {
       setError(`Minimum withdrawal is ${fmt.usd2(minWithdraw)}`)
       return
     }
-    if (!withdrawOtp || withdrawOtp.length < 6) {
-      setError('Request OTP and enter the 6-digit code from your email')
-      return
-    }
     setLoading(true)
     try {
       const { data } = await memberAPI.createWithdrawal({
         wallet_type: form.wallet_type,
         amount: amt,
         note: form.note || null,
-        otp: withdrawOtp.trim(),
       })
       setSuccess(data?.message || 'Withdrawal request submitted')
       setForm((f) => ({ ...f, amount: '', note: '' }))
-      setWithdrawOtp('')
-      setOtpSent(false)
       refetchDash()
       refetchW()
     } catch (err) {
@@ -331,35 +292,11 @@ export default function MemberWithdraw() {
                 <span className="mono" style={{ color: 'var(--green)' }}>{fmt.usd2(netAmt)}</span>
               </div>
             </div>
-            <Alert type="info" className="mb-3">
-              Email OTP required — click <strong>Send OTP</strong>, then enter the code from your registered email to submit withdrawal.
-            </Alert>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
-              <Btn
-                type="button"
-                variant="ghost"
-                loading={sendingOtp}
-                disabled={!wallet?.trim() || !canWithdrawToday || amountBelowMin || !amountValid}
-                onClick={sendWithdrawOtp}
-              >
-                {otpSent ? 'Resend OTP' : 'Send OTP to email'}
-              </Btn>
-              <div style={{ flex: '1 1 160px' }}>
-                <div className="form-label">Email OTP</div>
-                <Input
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={withdrawOtp}
-                  onChange={(e) => setWithdrawOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="6-digit code"
-                />
-              </div>
-            </div>
             <Btn
               type="submit"
               variant="primary"
               loading={loading}
-              disabled={!wallet?.trim() || !canWithdrawToday || withdrawOtp.length < 6 || amountBelowMin || !amountValid}
+              disabled={!wallet?.trim() || !canWithdrawToday || amountBelowMin || !amountValid}
             >
               Submit request
             </Btn>

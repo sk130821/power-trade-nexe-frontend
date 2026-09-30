@@ -3353,6 +3353,115 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   .trading-growth-strip-stats { grid-template-columns: 1fr; }
 }
 
+.trading-2x-strip {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(0, 229, 255, 0.04) 50%, var(--bg-card) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.trading-2x-strip--expired {
+  border-color: rgba(255, 64, 96, 0.35);
+  background: linear-gradient(135deg, rgba(255, 64, 96, 0.08) 0%, var(--bg-card) 100%);
+}
+.trading-2x-strip--working {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, var(--bg-card) 100%);
+}
+.trading-2x-strip-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.trading-2x-strip-badge {
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.trading-2x-strip--working .trading-2x-strip-badge { color: var(--green); }
+.trading-2x-strip--expired .trading-2x-strip-badge { color: var(--red); }
+.trading-2x-strip-title {
+  font-size: 17px;
+  font-weight: var(--fw-semibold);
+}
+.trading-2x-strip-sub {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 4px;
+  line-height: 1.5;
+  max-width: 720px;
+}
+.trading-2x-strip-link {
+  font-size: 12px;
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+.trading-2x-strip-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.trading-2x-stat {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.trading-2x-stat-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.trading-2x-stat-value {
+  display: block;
+  font-size: 22px;
+  font-weight: var(--fw-semibold);
+  line-height: 1.2;
+}
+.trading-2x-stat-value.red { color: var(--red); }
+.trading-2x-stat-value.green { color: var(--green); }
+.trading-2x-stat-value.gold { color: var(--gold); }
+.trading-2x-stat-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.trading-2x-progress-wrap { margin-top: 4px; }
+.trading-2x-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.trading-2x-progress-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-card2);
+  overflow: hidden;
+}
+.trading-2x-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.35s ease;
+}
+
+@media (max-width: 640px) {
+  .trading-2x-strip-stats { grid-template-columns: 1fr; }
+}
+
 .trading-txn-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -3809,3 +3918,77 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   border: 1px solid var(--border-sm);
 }
 .reward-plan-bar > div { height: 100%; border-radius: 999px; }
+
+.reward-plan-actions {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.reward-plan-actions .btn {
+  flex: 1 1 0;
+  min-width: max(88px, 0);
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 11px;
+  padding: 8px 10px;
+}
+.reward-plan-actions .reward-plan-skip-btn.btn-primary {
+  background: linear-gradient(135deg, #00e5ff 0%, #22c55e 45%, #ffcc00 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #061018;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 18px rgba(0, 229, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.reward-plan-actions .reward-plan-skip-btn.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 22px rgba(34, 197, 94, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+.reward-plan-actions .reward-plan-skip-btn.btn-primary:disabled {
+  opacity: 0.65;
+}
+
+.member-achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.member-achievement-card {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.member-achievement-card-photo {
+  aspect-ratio: 4 / 3;
+  background: var(--bg-card2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.member-achievement-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.member-achievement-card-body {
+  padding: 14px 16px 16px;
+}
+.member-achievement-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.member-achievement-card-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-2);
+  white-space: pre-wrap;
+}

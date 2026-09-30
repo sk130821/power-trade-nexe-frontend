@@ -18,6 +18,7 @@ const ADMIN_NAV = [
   { to: '/admin/day-trades',   icon: '◎',  label: 'Live Trades'      },
   { to: '/admin/salary-reward',icon: '★',  label: 'Salary & Reward' },
   { to: '/admin/reward-plan',  icon: '🏆', label: 'Reward Plan'     },
+  { to: '/admin/member-achievements', icon: '★', label: 'Member achievements' },
   { to: '/admin/transactions', icon: '🧾',  label: 'Transaction History' },
   { to: '/admin/notices',     icon: '📣',  label: 'Member notices'    },
   { to: '/admin/withdrawals', icon: '↩',   label: 'Withdrawals'       },
@@ -102,6 +103,7 @@ const MEMBER_NAV = [
   { to: '/member/income', icon: '💰', label: 'Income' },
   { to: '/member/monthly-income', icon: '📅', label: 'Monthly Income' },
   { to: '/member/rewards', icon: '🏆', label: 'Rewards' },
+  { to: '/member/achievements', icon: '★', label: 'Achievements' },
   { to: '/member/add-member', icon: '➕', label: 'Add Member' },
   { to: '/member/transactions', icon: '🧾', label: 'Transaction History' },
   { to: '/member/roi',       icon: '📈', label: 'Exchange Trading' },
@@ -112,6 +114,7 @@ const MEMBER_NAV = [
   { to: '/member/plan-topup', icon: '⬆', label: 'Plan TOP-UP (Trade)' },
   { to: '/member/level-business', icon: '📊', label: 'Level Business' },
   { to: '/member/network',   icon: '🌳', label: 'Genealogy' },
+  { to: '/member/nominee',  icon: '👤', label: 'Nominee details' },
   { to: '/member/password',  icon: '🔑', label: 'Change password' },
   { to: '/member/withdraw',  icon: '↩',  label: 'Withdraw (USDT BEP20)' },
 ]

@@ -842,6 +842,9 @@ export default function AdminMembers() {
             </div>
             <DetailRow label="Email" value={m.email} />
             <DetailRow label="Contact" value={m.contact} />
+            <DetailRow label="Nominee" value={m.nominee_name || '—'} />
+            <DetailRow label="Nominee contact" value={m.nominee_contact || '—'} />
+            <DetailRow label="Nominee relation" value={m.nominee_relation || '—'} />
             <DetailRow label="Aadhaar / Passport" value={m.aadhaar_no} />
             <DetailRow label="DOB" value={fmt.date(m.dob)} />
             <DetailRow label="DB ID" value={`#${m.id}`} />

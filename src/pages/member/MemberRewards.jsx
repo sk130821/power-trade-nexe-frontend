@@ -12,6 +12,7 @@ const STATUS_META = {
   pending:         { label: 'Request with admin',    color: 'var(--gold)',   bg: 'rgba(255,204,0,0.12)', border: 'rgba(255,204,0,0.35)', icon: '⏳' },
   approved:        { label: 'Approved',              color: 'var(--purple)', bg: 'var(--purple-dim)', border: 'rgba(168,85,247,0.35)', icon: '★' },
   rejected:        { label: 'Rejected — request again', color: 'var(--red)', bg: 'var(--red-dim)',    border: 'rgba(255,64,96,0.3)', icon: '✕' },
+  skipped:         { label: 'Skipped — next reward', color: 'var(--text-2)', bg: 'var(--bg-card2)', border: 'var(--border)', icon: '→' },
 }
 
 function StatusBadge({ status }) {
@@ -35,9 +36,10 @@ function Bar({ pct, color }) {
   )
 }
 
-function RewardCard({ tier, program, onClaim, claimingId, memberActive }) {
+function RewardCard({ tier, program, onClaim, onSkip, claimingId, skippingId, memberActive }) {
   const img = tier.gift_image ? uploadUrl(tier.gift_image) : null
   const busy = claimingId === tier.id
+  const skipBusy = skippingId === tier.id
   const showCash = program === 'daily_growth' && tier.allows_cash && Number(tier.cash_amount) > 0
 
   return (
@@ -67,6 +69,9 @@ function RewardCard({ tier, program, onClaim, claimingId, memberActive }) {
           <Bar pct={tier.directs_pct} color="var(--cyan)" />
           <div style={{ marginTop: 8 }}>
             Team business: <strong style={{ color: 'var(--text-1)' }}>{fmt.usd2(tier.business_done)} / {fmt.usd2(tier.team_business)}</strong>
+            {tier.cumulative_business && (
+              <span style={{ color: 'var(--text-3)' }}> (after previous gifts)</span>
+            )}
             {tier.business_left > 0 ? ` · ${fmt.usd2(tier.business_left)} left` : ' · done'}
           </div>
           <Bar pct={tier.business_pct} color="var(--gold)" />
@@ -90,20 +95,56 @@ function RewardCard({ tier, program, onClaim, claimingId, memberActive }) {
           <Alert type="danger">Rejected{tier.claim.admin_note ? `: ${tier.claim.admin_note}` : ''}. You can request again.</Alert>
         )}
 
-        {tier.can_claim && memberActive && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-            {showCash && (
-              <Btn size="sm" variant="gold" loading={busy} onClick={() => onClaim(tier, 'cash')}>
-                {fmt.usd2(tier.cash_amount)}
-              </Btn>
+        {tier.status === 'skipped' && (
+          <div style={{ fontSize: 12, color: 'var(--text-2)' }}>You chose the next reward — this gift was skipped.</div>
+        )}
+
+        {(tier.can_claim || tier.can_skip) && memberActive && (
+          <>
+            <div
+              className="reward-plan-actions"
+              style={{
+                display: 'flex',
+                flexWrap: 'nowrap',
+                gap: 8,
+                marginTop: 10,
+                alignItems: 'center',
+              }}
+            >
+              {tier.can_claim && showCash && (
+                <Btn size="sm" variant="gold" loading={busy} onClick={() => onClaim(tier, 'cash')}>
+                  {fmt.usd2(tier.cash_amount)}
+                </Btn>
+              )}
+              {tier.can_claim && (
+                <Btn size="sm" variant="purple" loading={busy} onClick={() => onClaim(tier, 'gift')}>
+                  {tier.gift_name}
+                </Btn>
+              )}
+              {tier.can_skip && (
+                <Btn
+                  size="sm"
+                  variant="primary"
+                  className="reward-plan-skip-btn"
+                  loading={skipBusy}
+                  onClick={() => onSkip(tier)}
+                >
+                  Next — skip this gift
+                </Btn>
+              )}
+            </div>
+            {tier.can_skip && (
+              <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.5 }}>
+                Skip keeps this tier’s own team target for the next gift (e.g. Tablet $10,000). If you take the gift first, the next tier adds targets (e.g. $5,000 + $10,000).
+              </div>
             )}
-            <Btn size="sm" variant="purple" loading={busy} onClick={() => onClaim(tier, 'gift')}>
-              {tier.gift_name}
-            </Btn>
-          </div>
+          </>
         )}
         {tier.can_claim && !memberActive && (
           <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 8 }}>Activate your ID to send a request.</div>
+        )}
+        {tier.can_skip && !memberActive && (
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 8 }}>Activate your ID to skip to the next reward.</div>
         )}
       </div>
     </div>
@@ -114,8 +155,10 @@ export function MemberRewards() {
   const [tab, setTab] = useState('daily_growth')
   const [toast, setToast] = useState(null)
   const [claimingId, setClaimingId] = useState(null)
+  const [skippingId, setSkippingId] = useState(null)
   const { data, loading, error, refetch } = useApi(() => memberAPI.getRewards())
   const { mutate: claim } = useMutation(memberAPI.claimReward)
+  const { mutate: skip } = useMutation(memberAPI.skipReward)
 
   const notify = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -137,6 +180,20 @@ export function MemberRewards() {
     }
   }
 
+  const onSkip = async (tier) => {
+    if (!window.confirm(`Skip ${tier.gift_name} and move to the next reward? Team target for the next gift stays at that tier’s own amount (not added to skipped gifts).`)) return
+    setSkippingId(tier.id)
+    try {
+      const res = await skip({ tier_id: tier.id })
+      notify(res.message || 'Skipped')
+      refetch()
+    } catch (e) {
+      notify(e.message, 'danger')
+    } finally {
+      setSkippingId(null)
+    }
+  }
+
   if (loading) return <MemberLayout><Spinner /></MemberLayout>
   if (error || !data) return <MemberLayout><Alert type="danger">{error || 'Rewards not available'}</Alert></MemberLayout>
 
@@ -148,7 +205,7 @@ export function MemberRewards() {
       <div className="page-header">
         <div className="page-title">Rewards</div>
         <div className="page-subtitle">
-          Qualify with active directs <strong>and</strong> full-team business. Daily Growth: choose cash or gift. Life Time: gift + rank.
+          Qualify with active directs <strong>and</strong> team business. Use <strong>Next — skip</strong> to jump ahead (next tier uses its own target, e.g. Tablet $10,000). If you take each gift in order, targets add up (e.g. Tablet $15,000 after Smart Phone).
         </div>
       </div>
       {toast && <Alert type={toast.type} onClose={() => setToast(null)}>{toast.msg}</Alert>}
@@ -183,7 +240,9 @@ export function MemberRewards() {
             tier={tier}
             program={tab}
             onClaim={onClaim}
+            onSkip={onSkip}
             claimingId={claimingId}
+            skippingId={skippingId}
             memberActive={memberActive}
           />
         ))}

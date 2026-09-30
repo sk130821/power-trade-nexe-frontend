@@ -11,7 +11,8 @@ import { PAYMENT_TYPE_TRUST, isEvmTxHash } from '../../utils/paymentTypes.js'
 const STEPS = [
   { key: 'details', label: 'Member Details', icon: '1' },
   { key: 'package', label: 'Package', icon: '2' },
-  { key: 'payment', label: 'Payment', icon: '3' },
+  { key: 'verify', label: 'Email OTP', icon: '3' },
+  { key: 'payment', label: 'Payment', icon: '4' },
   { key: 'done', label: 'Done', icon: '✓' },
 ]
 
@@ -29,6 +30,7 @@ export function MemberAddMember() {
   const [aadhaarFile, setAadhaarFile] = useState(null)
   const [payment, setPayment] = useState({ txn_id: '', remark: '' })
   const [receiptFile, setReceiptFile] = useState(null)
+  const [regOtp, setRegOtp] = useState('')
 
   useEffect(() => {
     authAPI.getSettings().then((r) => setAdminSettings(r.data || {}))
@@ -48,17 +50,38 @@ export function MemberAddMember() {
     return fd
   }
 
-  const createMemberAndContinue = async () => {
+  const sendOtp = async () => {
     if (!pkg) { setError('Please select a package'); return }
     setLoading(true)
     setError('')
     try {
-      const { data } = await memberAPI.sendDownlineRegistrationOtp(buildFormData())
-      setMemberId(data.member_id)
-      setRefCode(data.member_code || data.referral_code)
+      await memberAPI.sendDownlineRegistrationOtp(buildFormData())
+      setRegOtp('')
       setStep(2)
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not create member')
+      setError(err.response?.data?.error || 'Could not send OTP')
+    }
+    setLoading(false)
+  }
+
+  const verifyOtp = async (e) => {
+    e.preventDefault()
+    if (!regOtp || regOtp.length < 6) {
+      setError('Enter the 6-digit OTP sent to the member email')
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      const { data } = await memberAPI.verifyDownlineRegistrationOtp({
+        email: details.email.trim(),
+        otp: regOtp.trim(),
+      })
+      setMemberId(data.member_id)
+      setRefCode(data.member_code || data.referral_code)
+      setStep(3)
+    } catch (err) {
+      setError(err.response?.data?.error || 'OTP verification failed')
     }
     setLoading(false)
   }
@@ -80,7 +103,7 @@ export function MemberAddMember() {
       fd.append('amount', pkg)
       if (receiptFile) fd.append('receipt', receiptFile)
       await memberAPI.submitPayment(fd)
-      setStep(3)
+      setStep(4)
     } catch (err) {
       setError(err.response?.data?.error || 'Payment submission failed')
     }
@@ -184,8 +207,8 @@ export function MemberAddMember() {
                 {!pkg && <Alert type="warning">Please select a package to continue</Alert>}
                 <div style={{ display: 'flex', gap: 8 }}>
                   <Btn variant="ghost" onClick={() => setStep(0)}>← Back</Btn>
-                  <Btn variant="primary" size="lg" style={{ flex: 1 }} onClick={createMemberAndContinue} loading={loading} disabled={!pkg}>
-                    Continue to payment →
+                  <Btn variant="primary" size="lg" style={{ flex: 1 }} onClick={sendOtp} loading={loading} disabled={!pkg}>
+                    Send OTP to member email →
                   </Btn>
                 </div>
               </>
@@ -194,6 +217,34 @@ export function MemberAddMember() {
         )}
 
         {step === 2 && (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: 28 }}>
+            <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>✉ Verify member email</div>
+            <Alert type="info" className="mb-4">
+              OTP sent to <strong>{details.email}</strong>. Enter the 6-digit code to continue.
+            </Alert>
+            <form onSubmit={verifyOtp}>
+              <FormGroup label="6-digit OTP" required>
+                <Input
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={regOtp}
+                  onChange={(e) => setRegOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="123456"
+                  required
+                />
+              </FormGroup>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Btn variant="ghost" type="button" onClick={() => setStep(1)}>← Back</Btn>
+                <Btn variant="ghost" type="button" loading={loading} onClick={sendOtp}>Resend OTP</Btn>
+                <Btn variant="primary" type="submit" loading={loading} disabled={regOtp.length < 6} style={{ flex: 1 }}>
+                  Verify & continue →
+                </Btn>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {step === 3 && (
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: 28 }}>
             <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 4 }}>💳 Payment Details</div>
             <Alert type="warning" className="mb-4">
@@ -218,7 +269,7 @@ export function MemberAddMember() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: 40, textAlign: 'center' }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
             <div style={{ fontSize: 22, fontWeight: 500, marginBottom: 8 }}>Member Registered!</div>

@@ -78,6 +78,149 @@ function planLabel(amount) {
   return pkg ? pkg.label : 'Plan'
 }
 
+function formatWindowDate(ymd) {
+  if (!ymd) return '—'
+  const [y, m, d] = String(ymd).slice(0, 10).split('-').map(Number)
+  if (!y || !m || !d) return ymd
+  return new Date(y, m - 1, d).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+/** Dashboard summary — 2× participation total days, remaining, window dates (IST Mon–Fri). */
+function NonWorking2xDashboardStrip({ window: w, income_cap }) {
+  const isWorking = Boolean(income_cap?.working)
+
+  if (isWorking) {
+    return (
+      <div className="trading-2x-strip mb-8 trading-2x-strip--working" id="member-2x-window">
+        <div className="trading-2x-strip-head">
+          <div>
+            <div className="trading-2x-strip-badge">WORKING MEMBER · 3× CAP</div>
+            <div className="trading-2x-strip-title">No fixed 2× day window</div>
+            <div className="trading-2x-strip-sub">
+              You have an active direct referral — income limit is <strong>3×</strong> your plan investment, not a fixed Mon–Fri day count.
+              Buy Trade on session days until cap is used.
+            </div>
+          </div>
+          <Link to="/member/roi-trade" className="trading-2x-strip-link">
+            Buy Trade →
+          </Link>
+        </div>
+        {income_cap ? (
+          <div className="trading-2x-strip-stats">
+            <div className="trading-2x-stat">
+              <span className="trading-2x-stat-label">Income cap</span>
+              <span className="trading-2x-stat-value mono gold">{fmt.usd2(income_cap.cap_limit)}</span>
+              <span className="trading-2x-stat-hint">3× on {fmt.usd2(income_cap.cap_base ?? income_cap.total_investment)}</span>
+            </div>
+            <div className="trading-2x-stat">
+              <span className="trading-2x-stat-label">Cap remaining</span>
+              <span className={`trading-2x-stat-value mono ${income_cap.capped_out ? 'red' : 'green'}`}>
+                {income_cap.capped_out ? 'MAXED' : fmt.usd2(income_cap.remaining)}
+              </span>
+            </div>
+            <div className="trading-2x-stat">
+              <span className="trading-2x-stat-label">2× day window</span>
+              <span className="trading-2x-stat-value mono" style={{ fontSize: 15 }}>
+                Not applicable
+              </span>
+              <span className="trading-2x-stat-hint">Only for non-working (2×) members</span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  const daysTotal = Number(w?.trading_days_allowed) || 0
+  const daysLeft = w?.window_expired ? 0 : Number(w?.trading_days_remaining) || 0
+  const daysElapsed = Number(w?.trading_days_elapsed) || 0
+  const pct = daysTotal > 0 ? Math.min(100, Math.round((daysElapsed / daysTotal) * 100)) : 0
+  const noCycle = w?.no_open_cycle || (!w?.window_start_date && daysTotal === 0)
+
+  return (
+    <div
+      id="member-2x-window"
+      className={`trading-2x-strip mb-8${w?.window_expired ? ' trading-2x-strip--expired' : ''}`}
+    >
+      <div className="trading-2x-strip-head">
+        <div>
+          <div className="trading-2x-strip-badge">NON-WORKING · 2× TRADE WINDOW</div>
+          <div className="trading-2x-strip-title">
+            {noCycle
+              ? '2× window not started yet'
+              : w?.window_expired
+                ? 'Participation window ended'
+                : `${daysLeft} trading day${daysLeft === 1 ? '' : 's'} left`}
+          </div>
+          <div className="trading-2x-strip-sub">
+            {noCycle ? (
+              <>Complete activation / plan top-up to open a 2× cycle. Then Mon–Fri trading days count toward your cap.</>
+            ) : (
+              <>
+                Mon–Fri only (IST). Missed days lapse. 2× target{' '}
+                <strong className="mono">{fmt.usd2(w?.cap_limit_2x ?? income_cap?.cap_limit ?? 0)}</strong>
+              </>
+            )}
+          </div>
+        </div>
+        <Link to="/member/roi-history" className="trading-2x-strip-link">
+          Trade history →
+        </Link>
+      </div>
+
+      <div className="trading-2x-strip-stats">
+        <div className="trading-2x-stat">
+          <span className="trading-2x-stat-label">Total days (2× window)</span>
+          <span className="trading-2x-stat-value mono gold">{daysTotal}</span>
+          <span className="trading-2x-stat-hint">Mon–Fri trading days allowed</span>
+        </div>
+        <div className="trading-2x-stat">
+          <span className="trading-2x-stat-label">Days left</span>
+          <span className={`trading-2x-stat-value mono ${w?.window_expired || daysLeft === 0 ? 'red' : 'green'}`}>
+            {daysLeft}
+          </span>
+          <span className="trading-2x-stat-hint">
+            Elapsed: {daysElapsed} · Bought: {w?.days_joined_in_window ?? 0}
+          </span>
+        </div>
+        <div className="trading-2x-stat">
+          <span className="trading-2x-stat-label">Window dates (IST)</span>
+          <span className="trading-2x-stat-value mono" style={{ fontSize: 14 }}>
+            {w?.window_start_date ? formatWindowDate(w.window_start_date) : '—'}
+          </span>
+          <span className="trading-2x-stat-hint mono">
+            to {w?.window_end_date ? formatWindowDate(w.window_end_date) : '—'}
+          </span>
+        </div>
+      </div>
+
+      {daysTotal > 0 && (
+        <div className="trading-2x-progress-wrap">
+          <div className="trading-2x-progress-label">
+            <span>Window progress</span>
+            <span className="mono">{pct}%</span>
+          </div>
+          <div className="trading-2x-progress-track">
+            <div
+              className="trading-2x-progress-fill"
+              style={{
+                width: `${pct}%`,
+                background: w?.window_expired
+                  ? 'var(--red)'
+                  : 'linear-gradient(90deg, var(--gold), var(--cyan))',
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function IncomeCapHighlight({ member, income_cap, non_working_2x_window }) {
   if (!income_cap) return null
 
@@ -466,6 +609,11 @@ export function MemberDashboard() {
 
   return (
     <MemberLayout>
+      <NonWorking2xDashboardStrip
+        window={non_working_2x_window}
+        income_cap={income_cap}
+      />
+
       {/* Trading terminal header */}
       <div className="trading-dash-hero">
         <div className="trading-dash-hero-top">
@@ -541,6 +689,30 @@ export function MemberDashboard() {
                 <span className="trading-ticker-label">Cap Left</span>
                 <span className={`trading-ticker-value mono ${income_cap.capped_out ? 'red' : 'green'}`}>
                   {income_cap.capped_out ? 'MAXED' : fmt.usd2(income_cap.remaining)}
+                </span>
+              </div>
+            </>
+          ) : null}
+          {!income_cap?.working && non_working_2x_window ? (
+            <>
+              <div className="trading-ticker-divider" />
+              <div className="trading-ticker-item">
+                <span className="trading-ticker-label">2× Days total</span>
+                <span className="trading-ticker-value gold mono">
+                  {non_working_2x_window.trading_days_allowed ?? 0}
+                </span>
+              </div>
+              <div className="trading-ticker-divider" />
+              <div className="trading-ticker-item">
+                <span className="trading-ticker-label">2× Days left</span>
+                <span
+                  className={`trading-ticker-value mono ${
+                    non_working_2x_window.window_expired ? 'red' : 'green'
+                  }`}
+                >
+                  {non_working_2x_window.window_expired
+                    ? 0
+                    : non_working_2x_window.trading_days_remaining ?? 0}
                 </span>
               </div>
             </>

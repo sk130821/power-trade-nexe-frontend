@@ -11,6 +11,7 @@ import AdminPayments from './pages/admin/AdminPayments.jsx'
 import AdminRoiReports from './pages/admin/AdminRoiReports.jsx'
 import { AdminRoiTrade, AdminDayTrades, AdminSalaryReward, AdminTransactions, AdminSettings } from './pages/admin/AdminPages.jsx'
 import AdminRewardPlan from './pages/admin/AdminRewardPlan.jsx'
+import AdminMemberAchievements from './pages/admin/AdminMemberAchievements.jsx'
 import AdminWebsiteBanners from './pages/admin/AdminWebsiteBanners.jsx'
 
 // Member pages
@@ -25,6 +26,8 @@ import { MemberAddMember } from './pages/member/MemberAddMember.jsx'
 import MemberWalletTopup from './pages/member/MemberWalletTopup.jsx'
 import MemberPlanTopup from './pages/member/MemberPlanTopup.jsx'
 import { MemberChangePassword } from './pages/member/MemberChangePassword.jsx'
+import { MemberNominee } from './pages/member/MemberNominee.jsx'
+import { MemberAchievements } from './pages/member/MemberAchievements.jsx'
 import AdminNotices from './pages/admin/AdminNotices.jsx'
 import AdminWithdrawals from './pages/admin/AdminWithdrawals.jsx'
 import AdminLoginPopupVideo from './pages/admin/AdminLoginPopupVideo.jsx'
@@ -67,6 +70,7 @@ function AppRoutes() {
           <Route path="/admin/day-trades"    element={<PrivateRoute role="admin"><AdminDayTrades /></PrivateRoute>} />
           <Route path="/admin/salary-reward" element={<PrivateRoute role="admin"><AdminSalaryReward /></PrivateRoute>} />
           <Route path="/admin/reward-plan" element={<PrivateRoute role="admin"><AdminRewardPlan /></PrivateRoute>} />
+          <Route path="/admin/member-achievements" element={<PrivateRoute role="admin"><AdminMemberAchievements /></PrivateRoute>} />
           <Route path="/admin/transactions"  element={<PrivateRoute role="admin"><AdminTransactions /></PrivateRoute>} />
           <Route path="/admin/settings"      element={<PrivateRoute role="admin"><AdminSettings /></PrivateRoute>} />
           <Route path="/admin/website-banners" element={<PrivateRoute role="admin"><AdminWebsiteBanners /></PrivateRoute>} />
@@ -80,6 +84,7 @@ function AppRoutes() {
           <Route path="/member/income" element={<PrivateRoute role="member"><MemberIncome /></PrivateRoute>} />
           <Route path="/member/monthly-income" element={<PrivateRoute role="member"><MemberMonthlyIncome /></PrivateRoute>} />
           <Route path="/member/rewards" element={<PrivateRoute role="member"><MemberRewards /></PrivateRoute>} />
+          <Route path="/member/achievements" element={<PrivateRoute role="member"><MemberAchievements /></PrivateRoute>} />
           <Route path="/member/add-member" element={<PrivateRoute role="member"><MemberAddMember /></PrivateRoute>} />
           <Route path="/member/transactions" element={<PrivateRoute role="member"><MemberTransactionHistory /></PrivateRoute>} />
           <Route path="/member/roi"       element={<PrivateRoute role="member"><MemberRoiTrade /></PrivateRoute>} />
@@ -92,6 +97,7 @@ function AppRoutes() {
           <Route path="/member/level-business" element={<PrivateRoute role="member"><MemberLevelBusiness /></PrivateRoute>} />
           <Route path="/member/genealogy" element={<PrivateRoute role="member"><MemberNetwork /></PrivateRoute>} />
           <Route path="/member/password"  element={<PrivateRoute role="member"><MemberChangePassword /></PrivateRoute>} />
+          <Route path="/member/nominee"   element={<PrivateRoute role="member"><MemberNominee /></PrivateRoute>} />
           <Route path="/member/withdraw"  element={<PrivateRoute role="member"><MemberWithdraw /></PrivateRoute>} />
 
           {/* 404 */}

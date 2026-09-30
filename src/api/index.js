@@ -6,6 +6,7 @@
 import axios from 'axios'
 
 const LIVE_API_ORIGIN = 'https://back.powertradenexus.com'
+const DEV_API_ORIGIN = 'http://127.0.0.1:5000'
 
 function trimSlash(value) {
   return String(value || '').replace(/\/$/, '')
@@ -21,6 +22,8 @@ const rawBase = import.meta.env.PROD
 const apiBase = import.meta.env.PROD
   ? (envOrigin || LIVE_API_ORIGIN)
   : envOrigin
+
+const OTP_HTTP_TIMEOUT = 45000
 
 const http = axios.create({
   baseURL: rawBase || '/api',
@@ -84,10 +87,18 @@ export const authAPI = {
 // ═══════════════════════════════════════════
 export const memberAPI = {
   register:       (formData) => http.post('/member/register', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  sendRegistrationOtp: (formData) => http.post('/member/register/send-otp', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  sendRegistrationOtp: (formData) =>
+    http.post('/member/register/send-otp', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: OTP_HTTP_TIMEOUT,
+    }),
   verifyRegistrationOtp: (data) => http.post('/member/register/verify', data),
   registerDownline: (formData) => http.post('/member/register-downline', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  sendDownlineRegistrationOtp: (formData) => http.post('/member/register-downline/send-otp', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  sendDownlineRegistrationOtp: (formData) =>
+    http.post('/member/register-downline/send-otp', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: OTP_HTTP_TIMEOUT,
+    }),
   verifyDownlineRegistrationOtp: (data) => http.post('/member/register-downline/verify', data),
   submitPayment:  (formData) => http.post('/member/payment',  formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   submitRegistrationPayment: (formData) =>
@@ -110,13 +121,17 @@ export const memberAPI = {
   submitPlanTopupPayment: (formData) =>
     http.post('/member/plan-topup/payment', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   changePassword: (data) => http.post('/member/change-password', data),
+  getNominee: () => http.get('/member/nominee'),
+  updateNominee: (data) => http.patch('/member/nominee', data),
   updateWalletAddress: (data) => http.patch('/member/wallet-address', data),
   getWithdrawals: () => http.get('/member/withdrawals'),
-  sendWithdrawalOtp: (data) => http.post('/member/withdrawals/send-otp', data),
+  sendWithdrawalOtp: (data) => http.post('/member/withdrawals/send-otp', data, { timeout: OTP_HTTP_TIMEOUT }),
   createWithdrawal: (data) => http.post('/member/withdrawals', data),
   getLoginPopups: () => http.get('/member/login-popups'),
   getRewards: () => http.get('/member/rewards'),
   claimReward: (data) => http.post('/member/rewards/claim', data),
+  skipReward: (data) => http.post('/member/rewards/skip', data),
+  getAchievements: () => http.get('/member/achievements'),
 }
 
 // ═══════════════════════════════════════════
@@ -154,6 +169,13 @@ export const rewardPlanAPI = {
   approveRequest: (id, data) => http.post(`/admin/reward-plan/requests/${id}/approve`, data ?? {}),
   rejectRequest: (id, data) => http.post(`/admin/reward-plan/requests/${id}/reject`, data ?? {}),
   getAchievers: (params) => http.get('/admin/reward-plan/achievers', { params }),
+}
+
+export const memberAchievementAPI = {
+  adminList: (params) => http.get('/admin/member-achievements', { params }),
+  adminCreate: (formData) => http.post('/admin/member-achievements', formData),
+  adminUpdate: (id, formData) => http.put(`/admin/member-achievements/${id}`, formData),
+  adminDelete: (id) => http.delete(`/admin/member-achievements/${id}`),
 }
 
 // ═══════════════════════════════════════════
@@ -308,12 +330,18 @@ export function levelIncomeDirectsRequired(levelNo) {
 export function uploadUrl(filename) {
   if (filename == null || filename === '') return ''
   const name = String(filename).replace(/^\/+/, '')
-  
-  if (apiBase) {
-    const origin = apiBase.replace(/\/api\/?$/i, '')
-    return `${origin}/uploads/${name}`
+  if (/^https?:\/\//i.test(name)) return name
+
+  let origin = ''
+  if (import.meta.env.PROD) {
+    origin = trimSlash(envOrigin) || LIVE_API_ORIGIN
+  } else {
+    origin = trimSlash(envOrigin) || DEV_API_ORIGIN
   }
-  return `/uploads/${name}`
+  if (envBase && !envOrigin) {
+    origin = trimSlash(envBase).replace(/\/api\/?$/i, '') || origin
+  }
+  return `${origin}/uploads/${name}`
 }
 
 export const fmt = {

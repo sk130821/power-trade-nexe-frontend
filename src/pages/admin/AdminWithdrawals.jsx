@@ -67,7 +67,7 @@ export default function AdminWithdrawals() {
         id: paidModal.id,
         body: { payout_tx_hash: payoutTx.trim() || null, admin_note: adminNote.trim() || null },
       })
-      notify('Marked paid — amount deducted from member wallet')
+      notify('Marked paid — send USDT to member (wallet was held at request time for new requests)')
       setPaidModal(null)
       setPayoutTx('')
       setAdminNote('')
@@ -81,7 +81,7 @@ export default function AdminWithdrawals() {
     e.preventDefault()
     try {
       await callReject({ id: rejectModal.id, body: { admin_note: rejectNote.trim() || null } })
-      notify('Rejected')
+      notify('Rejected — balance refunded to member if it was held at request time')
       setRejectModal(null)
       setRejectNote('')
       refetch()
@@ -95,8 +95,8 @@ export default function AdminWithdrawals() {
       <div className="page-header">
         <div className="page-title">Withdrawals</div>
         <div className="page-subtitle">
-          Member withdrawal requests — send <strong>USDT BEP20 (BSC)</strong> to their <strong>destination</strong> address,
-          then <strong>Mark paid</strong> here (optional payout tx hash).
+          New requests already <strong>hold</strong> the amount from the member wallet. Send <strong>USDT BEP20 (BSC)</strong> to their
+          address, then <strong>Mark paid</strong>. <strong>Reject</strong> refunds the held amount.
         </div>
       </div>
       {toast ? <Alert type={toast.type}>{toast.msg}</Alert> : null}

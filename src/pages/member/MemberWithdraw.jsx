@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react'
-import { memberAPI, fmt, WALLET_META, WITHDRAWAL_SCHEDULE, WITHDRAWAL_FEE_PERCENT, MIN_WITHDRAWAL_USD } from '../../api/index.js'
+import {
+  memberAPI,
+  fmt,
+  WALLET_META,
+  WITHDRAWAL_SCHEDULE,
+  WITHDRAWAL_FEE_PERCENT,
+  MIN_WITHDRAWAL_USD,
+  WITHDRAWAL_STEP_USD,
+  isWithdrawalAmountValid,
+} from '../../api/index.js'
 import { useApi } from '../../hooks/useApi.js'
 import { MemberLayout } from '../../components/layout/index.jsx'
 import { Alert, Btn, Card, FormGroup, Input, Textarea, Badge, Table, Spinner } from '../../components/ui/index.jsx'
@@ -29,18 +38,12 @@ export default function MemberWithdraw() {
 
   const member = dash?.member
   const withdrawals = wdata?.withdrawals || []
-  const schedule = wdata?.schedule || {}
   const tradingWalletInfo = wdata?.trading_wallet || dash?.trading_wallet_info || null
   const minWithdraw = wdata?.min_withdrawal_usd ?? MIN_WITHDRAWAL_USD
+  const stepWithdraw = wdata?.withdrawal_step_usd ?? WITHDRAWAL_STEP_USD
 
   const pendingCount = withdrawals.filter((w) => w.status === 'pending').length
   const paidCount = withdrawals.filter((w) => w.status === 'paid').length
-
-  const selectedSchedule = schedule[form.wallet_type]
-  const hoursOpen = selectedSchedule?.withdrawal_hours_open !== false
-  const canWithdrawToday = selectedSchedule
-    ? selectedSchedule.allowed_today !== false && hoursOpen
-    : form.wallet_type === 'trading_wallet' && hoursOpen
 
   const saveWallet = async (e) => {
     e.preventDefault()
@@ -73,6 +76,10 @@ export default function MemberWithdraw() {
       setError(`Minimum withdrawal is ${fmt.usd2(minWithdraw)}`)
       return
     }
+    if (!isWithdrawalAmountValid(amt)) {
+      setError(`Amount must be in ${fmt.usd2(stepWithdraw)} steps (e.g. $10, $20, $30)`)
+      return
+    }
     setSendingOtp(true)
     try {
       const { data } = await memberAPI.sendWithdrawalOtp({
@@ -101,6 +108,10 @@ export default function MemberWithdraw() {
     }
     if (amt < minWithdraw) {
       setError(`Minimum withdrawal is ${fmt.usd2(minWithdraw)}`)
+      return
+    }
+    if (!isWithdrawalAmountValid(amt)) {
+      setError(`Amount must be in ${fmt.usd2(stepWithdraw)} steps (e.g. $10, $20, $30)`)
       return
     }
     if (!withdrawOtp || withdrawOtp.length < 6) {
@@ -136,7 +147,9 @@ export default function MemberWithdraw() {
   const grossAmt = Number(form.amount) || 0
   const hasAmount = form.amount !== '' && Number.isFinite(grossAmt) && grossAmt > 0
   const amountBelowMin = hasAmount && grossAmt < minWithdraw
-  const amountValid = hasAmount && grossAmt >= minWithdraw && grossAmt <= withdrawableBal
+  const amountBadStep = hasAmount && grossAmt >= minWithdraw && !isWithdrawalAmountValid(grossAmt)
+  const amountValid =
+    hasAmount && isWithdrawalAmountValid(grossAmt) && grossAmt <= withdrawableBal
   const feeAmt = Math.round(grossAmt * WITHDRAWAL_FEE_PERCENT) / 100
   const netAmt = Math.max(0, Math.round((grossAmt - feeAmt) * 10000) / 10000)
 
@@ -153,16 +166,17 @@ export default function MemberWithdraw() {
       <div className="page-header">
         <div className="page-title">Withdraw to USDT BEP20</div>
         <div className="page-subtitle">
-          Save your payout address, submit a request, and track status here. After admin sends crypto and marks{' '}
-          <strong>paid</strong>, your in-app wallet balance is deducted.
+          Save your payout address and submit a request. The amount is{' '}
+          <strong>deducted from your wallet immediately</strong> while pending. If admin rejects, it is{' '}
+          <strong>refunded</strong>; if marked paid, USDT is sent to your address.
         </div>
       </div>
 
       <Alert type="info" className="mb-4">
-        <strong>Withdrawal schedule (IST):</strong>{' '}
-        All wallets — daily <strong>8:00 AM – 8:00 PM</strong> only · Trading — any day · Salary — <strong>1st</strong> · Exchange — <strong>15th</strong>
+        <strong>Withdraw anytime</strong> from Exchange, Trading, or Salary wallet (24/7).
         <br />
-        <strong>Minimum withdrawal:</strong> {fmt.usd2(minWithdraw)} (all wallets)
+        <strong>Amount rules:</strong> minimum {fmt.usd2(minWithdraw)}, in multiples of {fmt.usd2(stepWithdraw)} only
+        (e.g. $10, $20, $30).
       </Alert>
 
       {error ? (
@@ -180,10 +194,6 @@ export default function MemberWithdraw() {
       <div className="grid-wallets mb-6">
         {WALLET_KEYS.map((key) => {
           const meta = WALLET_META[key]
-          const sch = schedule[key]
-          const openToday = sch?.allowed_today !== false
-          const hoursOpen = sch?.withdrawal_hours_open !== false
-          const fullyOpen = openToday && hoursOpen
           const walletBal = Number(member?.[key] ?? 0)
           const isTrading = key === 'trading_wallet'
           const showWithdrawable = isTrading && tradingWalletInfo
@@ -213,9 +223,8 @@ export default function MemberWithdraw() {
                   'Available to withdraw'
                 )}
               </div>
-              <div style={{ fontSize: 10, marginTop: 8, color: fullyOpen ? 'var(--green)' : 'var(--orange)', lineHeight: 1.4 }}>
-                {WITHDRAWAL_SCHEDULE[key]?.hint}
-                {fullyOpen ? ' · ✓ Open now' : !hoursOpen ? ' · ⏰ Outside 8 AM – 8 PM IST' : sch?.next_date ? ` · Next: ${fmt.date(sch.next_date)}` : ' · Closed today'}
+              <div style={{ fontSize: 10, marginTop: 8, color: 'var(--green)', lineHeight: 1.4 }}>
+                {WITHDRAWAL_SCHEDULE[key]?.hint} · ✓ Open now
               </div>
             </div>
           )
@@ -253,27 +262,13 @@ export default function MemberWithdraw() {
                 value={form.wallet_type}
                 onChange={(e) => setForm((f) => ({ ...f, wallet_type: e.target.value }))}
               >
-                {WALLET_KEYS.map((k) => {
-                  const open = schedule[k]?.allowed_today !== false
-                  return (
-                    <option key={k} value={k}>
-                      {WALLET_META[k]?.label || k} — {fmt.usd2(member?.[k] ?? 0)}
-                      {open ? ' · open today' : ' · closed today'}
-                    </option>
-                  )
-                })}
+                {WALLET_KEYS.map((k) => (
+                  <option key={k} value={k}>
+                    {WALLET_META[k]?.label || k} — {fmt.usd2(member?.[k] ?? 0)}
+                  </option>
+                ))}
               </select>
             </FormGroup>
-            {selectedSchedule && !canWithdrawToday ? (
-              <Alert type="warning" className="mb-3">
-                Withdrawal from {WALLET_META[form.wallet_type]?.label} is not available today.
-                {selectedSchedule.next_date ? ` Next date: ${fmt.date(selectedSchedule.next_date)} (IST).` : ''}
-              </Alert>
-            ) : selectedSchedule?.allowed_today && form.wallet_type !== 'trading_wallet' ? (
-              <Alert type="success" className="mb-3">
-                Withdrawal window is open today — you can submit a request.
-              </Alert>
-            ) : null}
             {form.wallet_type === 'trading_wallet' ? (
               <Alert type="info" className="mb-3">
                 Live Trade wallet: only <strong>profit from winning (2×) trades</strong> can be withdrawn. Your top-up / invested amount stays in the wallet for re-trading.
@@ -282,18 +277,22 @@ export default function MemberWithdraw() {
             <FormGroup
               label="Amount (USD)"
               required
-              hint={`Minimum ${fmt.usd2(minWithdraw)} · Available: ${fmt.usd2(withdrawableBal)}`}
+              hint={`Multiples of ${fmt.usd2(stepWithdraw)} · min ${fmt.usd2(minWithdraw)} · available ${fmt.usd2(withdrawableBal)}`}
             >
               <Input
                 type="number"
                 min={String(minWithdraw)}
-                step="any"
+                step={String(stepWithdraw)}
                 value={form.amount}
                 onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
               />
               {amountBelowMin ? (
                 <p style={{ fontSize: 12, color: 'var(--red)', marginTop: 8, marginBottom: 0 }}>
                   Minimum withdrawal is {fmt.usd2(minWithdraw)}. Please enter at least {fmt.usd2(minWithdraw)}.
+                </p>
+              ) : amountBadStep ? (
+                <p style={{ fontSize: 12, color: 'var(--red)', marginTop: 8, marginBottom: 0 }}>
+                  Use {fmt.usd2(stepWithdraw)} steps only — e.g. $10, $20, $30 (not $15 or $25).
                 </p>
               ) : null}
             </FormGroup>
@@ -339,7 +338,7 @@ export default function MemberWithdraw() {
                 type="button"
                 variant="ghost"
                 loading={sendingOtp}
-                disabled={!wallet?.trim() || !canWithdrawToday || amountBelowMin || !amountValid}
+                disabled={!wallet?.trim() || amountBelowMin || amountBadStep || !amountValid}
                 onClick={sendWithdrawOtp}
               >
                 {otpSent ? 'Resend OTP' : 'Send OTP to email'}
@@ -359,7 +358,7 @@ export default function MemberWithdraw() {
               type="submit"
               variant="primary"
               loading={loading}
-              disabled={!wallet?.trim() || !canWithdrawToday || withdrawOtp.length < 6 || amountBelowMin || !amountValid}
+              disabled={!wallet?.trim() || withdrawOtp.length < 6 || amountBelowMin || amountBadStep || !amountValid}
             >
               Submit request
             </Btn>
@@ -367,13 +366,13 @@ export default function MemberWithdraw() {
               <p style={{ fontSize: 12, color: 'var(--red)', marginTop: 12, marginBottom: 0 }}>
                 Minimum withdrawal is {fmt.usd2(minWithdraw)} — button disabled until amount is {fmt.usd2(minWithdraw)} or more.
               </p>
+            ) : amountBadStep ? (
+              <p style={{ fontSize: 12, color: 'var(--red)', marginTop: 12, marginBottom: 0 }}>
+                Enter amount in {fmt.usd2(stepWithdraw)} multiples (e.g. $10, $20).
+              </p>
             ) : !wallet?.trim() ? (
               <p style={{ fontSize: 12, color: 'var(--orange)', marginTop: 12, marginBottom: 0 }}>
                 Save your USDT BEP20 (BSC) address first before submitting.
-              </p>
-            ) : !canWithdrawToday ? (
-              <p style={{ fontSize: 12, color: 'var(--orange)', marginTop: 12, marginBottom: 0 }}>
-                Withdrawal is only between <strong>8:00 AM – 8:00 PM IST</strong> (and on the correct calendar day for Salary / Exchange wallet).
               </p>
             ) : null}
           </form>

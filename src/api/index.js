@@ -304,11 +304,11 @@ export const WALLET_META = {
   salary_wallet:   { label: 'Salary Wallet',   icon: '💼', color: 'var(--gold)',   desc: 'Admin Salary Credits' },
 }
 
-/** When members can request withdrawal from each wallet (IST). */
+/** When members can request withdrawal from each wallet. */
 export const WITHDRAWAL_SCHEDULE = {
-  trading_wallet:  { hint: 'Any day · 8:00 AM – 8:00 PM IST', allowedDay: null },
-  salary_wallet:   { hint: '1st of month · 8:00 AM – 8:00 PM IST', allowedDay: 1 },
-  exchange_wallet: { hint: '15th of month · 8:00 AM – 8:00 PM IST', allowedDay: 15 },
+  trading_wallet:  { hint: 'Any time · $10 steps', allowedDay: null },
+  salary_wallet:   { hint: 'Any time · $10 steps', allowedDay: null },
+  exchange_wallet: { hint: 'Any time · $10 steps', allowedDay: null },
 }
 
 /** Portal fee deducted from every withdrawal (member receives amount - fee). */
@@ -316,6 +316,16 @@ export const WITHDRAWAL_FEE_PERCENT = 12
 
 /** Minimum gross withdrawal amount (USD). */
 export const MIN_WITHDRAWAL_USD = 10
+
+/** Amount must be a multiple of this (USD). */
+export const WITHDRAWAL_STEP_USD = 10
+
+export function isWithdrawalAmountValid(amount) {
+  const n = Number(amount)
+  if (!Number.isFinite(n) || n < MIN_WITHDRAWAL_USD) return false
+  const cents = Math.round(n * 100)
+  return cents % (WITHDRAWAL_STEP_USD * 100) === 0
+}
 
 export const LEVEL_PERCENTS = [5, 3, 2, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 export const MAX_NETWORK_LEVELS = LEVEL_PERCENTS.length
